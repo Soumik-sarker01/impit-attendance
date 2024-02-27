@@ -1,0 +1,216 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shift Reports</title>
+    <style>
+      body {
+        font-size: 14px; /* Adjusted font size */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        padding: 20px;
+      }
+      .dropdowns {
+        display: flex;
+        justify-content: center;
+        gap: 20px; /* Space between dropdowns */
+      }
+      .scrollable-tables {
+        display: flex;
+        justify-content: center;
+        gap: 20px; /* Space between tables */
+        max-width: 100%;
+      }
+      .scrollable-table {
+        display: block;
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 800px;
+        width: 100%;
+        max-width: 45%; /* Adjust width to allow side-by-side layout */
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 12px; /* Reduced font size for table */
+        width: 100%; /* Ensure table uses available space */
+        min-width: 500px; /* Minimum width to maintain readability */
+      }
+      th,
+      td {
+        padding: 6px; /* Reduced padding */
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        white-space: nowrap; /* Prevent text wrapping */
+      }
+      th {
+        background-color: #f2f2f2;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        overflow-y: auto; /* Make dropdown content scrollable */
+        max-height: 200px; /* Set max height for scroll */
+        z-index: 1000; /* Ensuring dropdown content is on top */
+      }
+      .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        font-size: 14px;
+      }
+      .dropdown:hover .dropdown-content {
+        display: block;
+      }
+      .dropdown-content a:hover {
+        background-color: #f1f1f1;
+      }
+      .dropbtn {
+        background-color: #4caf50; /* Green */
+        color: white;
+        padding: 10px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+      }
+      .dropbtn:hover,
+      .dropbtn:focus {
+        background-color: #3e8e41;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dropdowns">
+      <div class="dropdown">
+        <button class="dropbtn">Select Department</button>
+        <div class="dropdown-content">
+          <a href="#" onclick="filterByDepartment('All Departments')"
+            >All Departments</a
+          >
+          {% for department in departments %}
+          <a href="#" onclick="filterByDepartment('{{ department }}')"
+            >{{ department }}</a
+          >
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="dropdown">
+        <button class="dropbtn">Select Employee</button>
+        <div class="dropdown-content">
+          <a href="#" onclick="filterByEmployee('All Employees')"
+            >All Employees</a
+          >
+          {% for name in employee_names %}
+          <a href="#" onclick="filterByEmployee('{{ name }}')">{{ name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Picker for selecting a date -->
+    <div class="mb-3">
+      <label for="datePicker" class="form-label">Select Date</label>
+      <input type="date" class="form-control" id="datePicker" />
+    </div>
+
+    <div class="scrollable-tables">
+      {% for shift, reports in shift_reports %}
+      <div class="scrollable-table" id="{{ shift|slugify }}-table">
+        <h2>{{ shift }} Shift Report</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Employee Name</th>
+              <th>ID</th>
+              <th>Department</th>
+              <th>Date</th>
+              <th>First Entry</th>
+              <th>Last Exit</th>
+              <th>Duration</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Late</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+            <tr>
+              <td>{{ report|get_item:"Employee Name" }}</td>
+              <td>{{ report|get_item:"ID" }}</td>
+              <td>{{ report|get_item:"Department" }}</td>
+              <td>{{ report|get_item:"Date" }}</td>
+              <td>{{ report|get_item:"First Entry" }}</td>
+              <td>{{ report|get_item:"Last Exit" }}</td>
+              <td>{{ report|get_item:"Duration" }}</td>
+              <td>{{ report|get_item:"Present" }}</td>
+              <td>{{ report|get_item:"Absent" }}</td>
+              <td>{{ report|get_item:"Late" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+
+    <script>
+      function filterByDepartment(department) {
+        document
+          .querySelectorAll(".scrollable-table")
+          .forEach(function (table) {
+            table.querySelectorAll("tbody tr").forEach(function (row) {
+              var deptCell = row.querySelector("td:nth-child(3)").textContent;
+              if (department === "All Departments" || deptCell === department) {
+                row.style.display = "";
+              } else {
+                row.style.display = "none";
+              }
+            });
+          });
+      }
+      function filterByEmployee(name) {
+        document
+          .querySelectorAll(".scrollable-table")
+          .forEach(function (table) {
+            table.querySelectorAll("tbody tr").forEach(function (row) {
+              var nameCell = row.querySelector("td:first-child").textContent;
+              if (name === "All Employees" || nameCell === name) {
+                row.style.display = "";
+              } else {
+                row.style.display = "none";
+              }
+            });
+          });
+      }
+
+      // JavaScript for filtering by date using the date picker
+      document
+        .getElementById("datePicker")
+        .addEventListener("change", function () {
+          const selectedDate = this.value;
+          document
+            .querySelectorAll(".scrollable-table tbody tr")
+            .forEach(function (row) {
+              const dateCell = row.querySelector("td:nth-child(4)").textContent;
+              const rowDate = new Date(dateCell).toISOString().slice(0, 10); // Adjust if your date format is different
+              row.style.display = selectedDate === rowDate ? "" : "none";
+            });
+        });
+    </script>
+  </body>
+</html>
